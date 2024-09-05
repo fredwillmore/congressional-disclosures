@@ -45,11 +45,20 @@ gem "bootsnap", require: false
 # gem "image_processing", "~> 1.2"
 
 gem "pdf-reader"
+# not sure if I'm going to bother with OCR or not
+# it's of limited use, and mostly older files or special cases
+# if not, we can get rid of these gems
+gem 'mini_magick' # for rendering pdf to image file
+gem "rtesseract" # for ocr
+
+gem 'faraday'
+gem 'faraday-retry'
 
 group :development, :test do
   # See https://guides.rubyonrails.org/debugging_rails_applications.html#debugging-with-the-debug-gem
   gem "debug", platforms: %i[ mri windows ]
   gem 'rspec-rails'
+  gem "factory_bot_rails"
   gem 'dotenv-rails', groups: [:development, :test]
 end
 
