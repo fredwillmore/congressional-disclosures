@@ -6,4 +6,8 @@ class Legislator < ApplicationRecord
   def to_s
     "first_name: #{first_name}, last_name: #{last_name}, bioguide_id: #{bioguide_id}"
   end
+
+  def name
+    [prefix, first_name, last_name, suffix].compact.join ' '
+  end
 end
