@@ -3,34 +3,19 @@ require 'faraday/retry'
 
 Legislator.destroy_all if $options['destroy_all']
 
-# directory_path = 'db/data/congress_members'
-
-# # Get all text files in the directory
-# files = Dir.glob(File.join(directory_path, '*.json'))
-
-# data = []
-# files.each do |file_path|
-#   # Read the file and parse it as a tab-separated file
-#   # file = File.open(file_path)
-#   data.concat JSON.load(File.open(file_path))['members']
-# end
-
 http_connection = Faraday.new(url: "https://api.congress.gov/") do |faraday|
   faraday.request :retry, max: 5, interval: 5.0
   faraday.adapter Faraday.default_adapter
 end
-
 
 url = "https://api.congress.gov/v3/member"
 
 loop do 
   puts "getting #{url}"
 
-  # url_with_key = "#{url}&api_key=#{ENV.fetch('CONGRESS_GOV_API_KEY')}"
   uri = URI.parse(url)
   query_params = URI.decode_www_form(uri.query || '').to_h
 
-  # debugger
   endpoint = url.remove('https://api.congress.gov')
   sleep(1.0)
   file = http_connection.get(
@@ -42,7 +27,6 @@ loop do
       api_key: ENV.fetch('CONGRESS_GOV_API_KEY')
     }
   )
-  # debugger
   body = JSON.load(file.body)
 
   body['members'].each do |member|
@@ -67,19 +51,19 @@ loop do
     # now do the rest of the work
     member = JSON.parse(File.read(file_path))['member']
 
-    # debugger if !member['bioguideId']
     params = {
       bioguide_id: member['bioguideId'],
-      prefix: member['honorificName'],
-      first_name: member['firstName'],
-      last_name: member['lastName'],
+      prefix: member['honorificName']&.titleize,
+      first_name: member['firstName']&.titleize,
+      last_name: member['lastName']&.titleize,
       birth_year: member['birthYear'].to_i,
-    } rescue debugger
+    }
     
-    # legislator = Legislator.find_or_initialize_by(params)
     legislator = Legislator.find_or_create_by(params)
-
+    
     puts "legislator created successfully: #{legislator}"
+  rescue e
+    debugger
   end
 
   url = body['pagination']['next']
