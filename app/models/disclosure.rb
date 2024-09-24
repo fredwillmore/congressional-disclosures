@@ -15,6 +15,10 @@ class Disclosure < ApplicationRecord
   scope :with_text_documents, -> { where(filing_type: FilingType.with_text_documents).where.not(document_text: [nil, '']) }
   scope :original_fd, -> { where(filing_type: FilingType.original_fd) }
 
+  # using request_accumulator to inject different handling of batch requests
+  # need to refactor so it's not as clunky :/
+  attr_accessor :request_accumulator
+
   def to_s
     "id: #{id}, document_path: #{document_path}, document_url: #{document_url}"
   end
@@ -30,7 +34,7 @@ class Disclosure < ApplicationRecord
   def assets_header_regex
     [
       /asset\s*owner\s*value of asset\s*income\s*type\(s\)\s*income\s*tx\.\s*\>\s*\$1..00\?/mi,
-      /asset\s*owner\s*value of asset\s*income\s*income\s*tx\.\s*\>\s*type\(s\)\s*\$1..00\?/mi
+      /asset\s*owner\s*value of asset\s*income\s*(?:income)?\s*tx\.\s*\>\s*type\(s\)\s*\$1..00\?\s*(?:income)?\s*/mi
     ].find { |pattern| assets_text.match?(pattern) }
   end
 
@@ -64,91 +68,90 @@ class Disclosure < ApplicationRecord
     "db/seeds/data/disclosures/json_files/#{document_id}.json"
   end
 
-  def transactions_prompt(things)
-    %Q(
-      #{filing_type.transactions_prompt}
-      #{things}
-    )
+  def import_json_text_from_file
+    if File::file?(json_path)
+      update(json_text: JSON::parse(File.read(json_path)))
+    end
   end
 
-  def assets_prompt(things)
-    %Q(
-      #{filing_type.assets_prompt}
-      #{things}
-    )
+  def document_text_path
+    "db/seeds/data/disclosures/text_files/#{document_id}.txt"
   end
+
+  def import_document_text_from_file
+    if File.file?(document_text_path)
+      update(document_text: File.read(document_text_path))
+    end
+  end
+
+  def export_document_text_to_file
+    File.write(document_text_path, document_text)
+  end
+
+  # def transactions_prompt(things)
+  #   %Q(
+  #     #{filing_type.transactions_prompt}
+  #     #{things}
+  #   )
+  # end
+
+  # def assets_prompt(things)
+  #   %Q(
+  #     #{filing_type.assets_prompt}
+  #     #{things}
+  #   )
+  # end
+
+  # def assets_prompt_messages(things)
+  #   [
+  #     { role: "system", content: "You are a helpful assistant. Your task is to process text and return a valid json object." },
+  #     { role: "user", content: assets_prompt(things) }
+  #   ]
+  # end
 
   def extract_assets_json_portion(things)
-    # prompt = assets_prompt(things)
-    payload = {
-      model: "gpt-4o-mini", # or "gpt-3.5-turbo"
-      # model: "gpt-3.5-turbo",
-      messages: [
-        { role: "system", content: "You are a helpful assistant." },
-        { role: "user", content: assets_prompt(things) }
-      ],
-      max_tokens: 14000
-    }.to_json
+    request = GptRequest.new(request_type: :asset, content: things)
 
-    headers = {
-      "Content-Type" => "application/json",
-      "Authorization" => "Bearer #{api_key}"
-    }
-
-    endpoint = "https://api.openai.com/v1/chat/completions"
-    # Make the HTTP POST request to the OpenAI API
-    response = HTTP.headers(headers).post(endpoint, body: payload)
-    response_body = response.body
-    # Parse the response and extract the JSON content
-    structured_json = JSON.parse(response_body)["choices"][0]["message"]["content"]
-    
-    if structured_json.match(/```json\n(.*)\n```/m)
-      json = structured_json.match(/```json\n(.*)\n```/m)[1]
-    else
-      json = structured_json
+    if request_accumulator
+      request_accumulator.puts request
+      return []
     end
 
-    return JSON::parse(json)
+    request.get_json_response
   rescue StandardError => e
-    debugger
     puts "probably a limit error: #{response.body.to_s}
       check the document at #{document_path}"
     return # just return without doing anything - try again later
   end
 
   def extract_assets_json
-    pages = 10
-    assets = assets_text_pages.each_slice(pages).map do |slice|
+    assets_text_pages.each_slice(assets_pages).map do |slice|
       extract_assets_json_portion slice.join("\n\n").strip
-    end
-    return assets
+    end.reduce(:+)
   end
 
   def extract_transactions_json_portion(things)
-    payload = {
-      model: "gpt-4o-mini", # or "gpt-3.5-turbo"
-      # model: "gpt-3.5-turbo",
-      messages: [
-        { role: "system", content: "You are a helpful assistant." },
-        { role: "user", content: transactions_prompt(things) }
-      ],
-      max_tokens: 14000
-    }.to_json
+    request = GptRequest.new(request_type: :transaction, content: things)
+
+    if request_accumulator
+      request_accumulator.puts request
+      return []
+    end
 
     headers = {
       "Content-Type" => "application/json",
       "Authorization" => "Bearer #{api_key}"
     }
-
     endpoint = "https://api.openai.com/v1/chat/completions"
     # Make the HTTP POST request to the OpenAI API
-    response = HTTP.headers(headers).post(endpoint, body: payload)
+    
+    response = HTTP.headers(headers).post(endpoint, body: request.payload)
     response_body = response.body
     # Parse the response and extract the JSON content
     structured_json = JSON.parse(response_body)["choices"][0]["message"]["content"]
     
-    if structured_json.match(/```json\n(.*)\n```/m)
-      json = structured_json.match(/```json\n(.*)\n```/m)[1]
+    if structured_json.match(/```(?:json)\n(.*)\n```/m)
+      json = structured_json.match(/```(?:json)\n(.*)\n```/m)[1]
     else
       json = structured_json
     end
@@ -162,31 +165,58 @@ class Disclosure < ApplicationRecord
   end
 
   def extract_transactions_json
-    pages = 10
-    transactions = transactions_text_pages.each_slice(pages).map do |slice|
+    transactions_text_pages.each_slice(transactions_pages).map do |slice|
       extract_transactions_json_portion slice.join("\n\n").strip
-    end
-    return transactions
+    end.reduce(:+)
   end
 
-  def extract_filer_information_json
-    filer_information = document_text[/Clerk of the House of Representatives.*?20515(.*)A:\s*(A|SSetS)/im, 1].strip
+  def filer_information
+    document_text[/Clerk of the House of Representatives.*?20515(.*)A:\s*(A|SSetS)/im, 1].strip
+  end
 
-    # Define the prompt
-    prompt = %Q(
+  def filer_information_prompt
+    %Q(
       #{filing_type.filer_information_prompt}
       #{filer_information}
     )
+  end
 
-    # Create the request payload
+  def filer_information_payload
     payload = {
-      model: "gpt-4o-mini", # or "gpt-3.5-turbo"
+      model: gpt_model, # or "gpt-3.5-turbo"
       messages: [
         { role: "system", content: "You are a helpful assistant. Your task is to process text and return a json representation of the text" },
-        { role: "user", content: prompt }
+        { role: "user", content: filer_information_prompt }
       ],
-      max_tokens: 10000
-    }.to_json
+      max_tokens: max_tokens
+    }
+    if request_accumulator
+      page = 1
+      payload[:custom_id] = "document-#{document_id}-filing-#{page}"
+    end
+    payload
+  end
+
+  def extract_filer_information_json
+    # Create the request payload
+    payload = {
+      model: gpt_model, # or "gpt-3.5-turbo"
+      messages: [
+        { role: "system", content: "You are a helpful assistant. Your task is to process text and return a json representation of the text" },
+        { role: "user", content: filer_information_prompt }
+      ],
+      max_tokens: max_tokens
+    }.tap do |p|
+      if request_accumulator
+        page = 1
+        p[:custom_id] = "document-#{document_id}-filing-#{page}"
+      end
+    end.to_json
+
+    if request_accumulator
+      request_accumulator.puts payload
+      return {}
+    end
 
     headers = {
       "Content-Type" => "application/json",
@@ -200,8 +230,8 @@ class Disclosure < ApplicationRecord
     # Parse the response and extract the JSON content
     structured_json = JSON.parse(response_body)["choices"][0]["message"]["content"]
     
-    if structured_json.match(/```json\n(.*)\n```/m)
-      json = structured_json.match(/```json\n(.*)\n```/m)[1]
+    if structured_json.match(/```(?:json)\n(.*)\n```/m)
+      json = structured_json.match(/```(?:json)\n(.*)\n```/m)[1]
     else
       json = structured_json
     end
@@ -229,7 +259,7 @@ class Disclosure < ApplicationRecord
     image_path = 'tmp/page.png'
     images.write(image_path)
     extracted_text = RTesseract.new(image_path).to_s # Extracted text
-    debugger
+    # debugger
     puts extracted_text
   end
 
@@ -281,5 +311,21 @@ class Disclosure < ApplicationRecord
 
   def api_key
     ENV.fetch('OPENAI_API_KEY')
+  end
+
+  def gpt_model
+    "gpt-4o-mini"
+  end
+
+  def max_tokens
+    14000
+  end
+
+  def assets_pages
+    10
+  end
+
+  def transactions_pages
+    10
   end
 end
