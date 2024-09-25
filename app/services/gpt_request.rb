@@ -286,4 +286,66 @@ Please return a complete JSON array of all table entries, without omitting any e
     )
   end
 
+  def filer_information_prompt
+    case abbreviation
+    when 'A'
+      %Q(
+        )
+    when 'O'
+      %Q(
+        Please convert the following text into a JSON hash.
+        The text contains the following values:
+          Name (string),
+          Status (string),
+          State/District (state code and 1-2 digit number),
+          Filing Type (string),
+          Filing Year (year),
+          Filing Date (date)
+
+        Please return a JSON hash
+        Hash keys are "name", "status", "state_district", "filing_type", "filing_year", "filing_date"
+        Hash values are values of Name, Status, State/District, Filing Type, Filing Year, Filing Date
+
+
+        Example text:
+        ```
+F I
+
+Name:                 Hon. Thomas MacArthur
+Status:               Member
+
+State/District:       NJ03
+
+
+
+F I
+
+Filing Type:          Annual Report
+Filing Year:          2015
+
+Filing Date:          05/14/2016
+        ```
+
+        Desired output:
+        ```
+          {
+            "filer_information" => {
+              "name"=>"Hon. Thomas MacArthur",
+              "status"=>"Member",
+              "state_district"=>"NJ03"
+            },
+            "filing_information" => {
+              "filing_type"=>"Annual Report",
+              "filing_year"=>2015,
+              "filing_date"=>"05/14/2016"
+            },
+          }
+        ```
+
+        Please process the following text in the same way:
+      )
+    else
+    end
+  end
+
 end
