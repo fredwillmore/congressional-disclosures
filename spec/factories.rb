@@ -1,4 +1,8 @@
 FactoryBot.define do
+  factory :document do
+    
+  end
+
   factory :income_type do
     
   end

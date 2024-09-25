@@ -7,6 +7,8 @@ class Disclosure < ApplicationRecord
   belongs_to :filing_type
   belongs_to :state
 
+  has_one :document
+
   has_many :assets
   has_many :transactions
 
