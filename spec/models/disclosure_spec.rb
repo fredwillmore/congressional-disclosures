@@ -2,6 +2,7 @@ require 'rails_helper'
 
 describe Disclosure do
   describe :extract_text do
+    let!(:document) { create(:document, disclosure: disclosure)}
     let(:document_path) do
       'spec/fixtures/files/disclosure_documents/10059371.pdf'
     end
@@ -30,7 +31,8 @@ describe Disclosure do
   end
 
   describe :transactions_text do
-    let(:disclosure) { create(:disclosure, document_text: document_text)}
+    let!(:document) { create(:document, document_text: document_text, disclosure: disclosure)}
+    let(:disclosure) { create(:disclosure)}
     let(:document_text) { File.read(document_text_file) }
     let(:expected_text) { File.read(expected_text_file) }
   
@@ -63,7 +65,8 @@ describe Disclosure do
   end
 
   describe :transactions_text_pages do
-    let(:disclosure) { create(:disclosure, document_text: document_text)}
+    let!(:document) { create(:document, document_text: document_text, disclosure: disclosure)}
+    let(:disclosure) { create(:disclosure)}
     let(:document_text) { File.read(document_text_file) }
     let(:expected_text) { File.read(expected_text_file) }
 
@@ -78,8 +81,9 @@ describe Disclosure do
   end
 
   describe :extract_transactions_json do
+    let!(:document) { create(:document, document_text: document_text, disclosure: disclosure)}
     let(:disclosure) do
-      create(:disclosure, document_text: document_text).tap do |d|
+      create(:disclosure).tap do |d|
         d.request_accumulator = request_accumulator
       end
     end
@@ -139,8 +143,8 @@ describe Disclosure do
   end
 
   xdescribe :extract_filer_information_json do
-    let(:disclosure) { create(:disclosure, document_text:)}
-    let(:disclosure) { create(:disclosure, document_text: document_text)}
+    let!(:document) { create(:document, document_text: document_text, disclosure: disclosure)}
+    let(:disclosure) { create(:disclosure)}
     let(:document_text) { File.read document_text_file }
 
     context "with huge file" do
@@ -170,7 +174,8 @@ describe Disclosure do
   end
 
   describe :assets_text_pages do
-    let(:disclosure) { create(:disclosure, document_text: document_text)}
+    let!(:document) { create(:document, document_text: document_text, disclosure: disclosure)}
+    let(:disclosure) { create(:disclosure)}
 
     context "with 2013 filing" do
       let(:document_text) do
@@ -187,7 +192,8 @@ describe Disclosure do
   end
 
   describe :assets_text do
-    let(:disclosure) { create(:disclosure, document_text: document_text)}
+    let!(:document) { create(:document, document_text: document_text, disclosure: disclosure)}
+    let(:disclosure) { create(:disclosure)}
 
     context "with 2013 filing" do
       let(:document_text) do
@@ -286,11 +292,17 @@ describe Disclosure do
         name: 'Original FD'
       )
     end
+    let!(:document) do
+      create(
+        :document,
+        disclosure: disclosure,
+        document_text: document_text
+      )
+    end
     let(:disclosure) do
       create(
         :disclosure,
         filing_type: filing_type,
-        document_text: document_text
       )
       # instance_double Disclosure
     end
@@ -305,7 +317,8 @@ describe Disclosure do
 
     # this is a test for examining the gpt response for a single record with different gpt models
     xcontext "with document 10013349" do
-      let(:disclosure) { create(:disclosure, document_id: document_id) }
+      let(:disclosure) { create(:disclosure) }
+      let!(:document) { create(:document, external_id: document_id, disclosure: disclosure) }
       let(:document_id) { '10013349' }
       let(:max_tokens) { 14000 }
       let(:assets_pages) { 10 }

@@ -66,9 +66,22 @@ class Disclosure < ApplicationRecord
     debugger
   end
 
-  def json_path
-    document.json_path
+  def document_id
+    document.external_id    
   end
+
+  def json_text
+    document.document_json    
+  end
+
+  delegate(
+    :json_path, :document_text,
+    to: :document, allow_nil: true
+  )
+
+  # def json_path
+  #   document.json_path
+  # end
 
   def import_json_text_from_file
     if File::file?(json_path)
@@ -242,12 +255,12 @@ class Disclosure < ApplicationRecord
   end
 
   def extract_json
-    result = json_text || {}
+    result = document.document_json || {}
     
     result.merge! "a_assets" => extract_assets_json
     result.merge! "b_transactions" => extract_transactions_json
     result.merge! extract_filer_information_json
-    update(json_text: result)
+    document.update(document_json: result)
 
   rescue StandardError => e
     debugger
@@ -274,8 +287,9 @@ class Disclosure < ApplicationRecord
     end.map(&:presence).compact.join("\n")
     extracted_text.delete!("\0") # delete null character
     # puts "This is the text, see: #{extracted_text}"
+    document&.update(document_text: extracted_text)
+    # TODO: is this still being used?
     update(
-      document_text: extracted_text,
       image_pdf: false
     )
   rescue ArgumentError, Encoding::CompatibilityError => e
