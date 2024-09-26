@@ -133,8 +133,11 @@ text_files.each do |file_path|
       district: district,
       year: year,
       filing_date: filing_date,
-      document_id: document_id
+      document: Document.create(
+        external_id: document_id
+      )
     }
+
 
     Disclosure.create(params)
   rescue StandardError => e

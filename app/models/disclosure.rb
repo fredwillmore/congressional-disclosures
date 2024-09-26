@@ -26,11 +26,11 @@ class Disclosure < ApplicationRecord
   end
 
   def document_url
-    "https://disclosures-clerk.house.gov/public_disc/#{filing_type.document_directory}/#{year}/#{document_id}.pdf"
+    document.document_url
   end
-
+  
   def document_path
-    "db/seeds/data/disclosures/#{filing_type.document_directory}/#{document_id}.pdf"
+    document.document_path
   end
 
   def assets_header_regex
@@ -67,7 +67,7 @@ class Disclosure < ApplicationRecord
   end
 
   def json_path
-    "db/seeds/data/disclosures/json_files/#{document_id}.json"
+    document.json_path
   end
 
   def import_json_text_from_file
@@ -77,7 +77,7 @@ class Disclosure < ApplicationRecord
   end
 
   def document_text_path
-    "db/seeds/data/disclosures/text_files/#{document_id}.txt"
+    document.document_text_path
   end
 
   def import_document_text_from_file
