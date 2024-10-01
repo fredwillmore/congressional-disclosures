@@ -9,6 +9,14 @@ class Term < ApplicationRecord
     "#{legislator.name} - #{state.name} - #{district} - #{member_type} - #{start_year}-#{end_year}"
   end
 
+  scope :chamber, ->(member_type:, congress: nil) {
+    query = where(member_type: member_type)
+
+    congress ? query.where(congress: congress) : query
+  }
+  scope :house, ->(congress: nil) { chamber(member_type: "Representative", congress: congress) }
+  scope :senate, ->(congress: nil) { chamber(member_type: "Senator", congress: congress) }
+
   def self.by_state_district_year(state, district, year)
     where(
       state: state,
