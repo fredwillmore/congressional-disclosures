@@ -14,7 +14,7 @@ class Disclosure < ApplicationRecord
 
   validates :legislator, :filing_type, presence: true
 
-  scope :with_text_documents, -> { where(filing_type: FilingType.with_text_documents).where.not(document_text: [nil, '']) }
+  scope :with_text_documents, -> { where(filing_type: FilingType.with_text_documents).joins(:document).where.not(document: {document_json: [nil, '']}) }
   scope :original_fd, -> { where(filing_type: FilingType.original_fd) }
 
   # using request_accumulator to inject different handling of batch requests
@@ -61,17 +61,17 @@ class Disclosure < ApplicationRecord
   end
 
   def transactions_text
-    document_text[/B:\s*(T|ransaction).*?\n(.*)\n.*C:\s*(e|rned)/im, 2].strip
+    document_text[/B:\s*(t|t?ransaction).*?\n(.*)\n.*C:\s*(e|a?rn)/im, 2].strip
   rescue StandardError => e
     debugger
   end
 
   def document_id
-    document.external_id    
+    document&.external_id
   end
 
   def json_text
-    document.document_json    
+    document&.document_json
   end
 
   delegate(
@@ -124,11 +124,11 @@ class Disclosure < ApplicationRecord
   #   ]
   # end
 
-  def extract_assets_json_portion(things)
-    request = GptRequest.new(request_type: :asset, content: things)
+  def extract_assets_json_portion(things, page)
+    request = GptRequest.new(request_type: :asset, content: things, page: page, document_external_id: document.external_id)
 
     if request_accumulator
-      request_accumulator.puts request
+      request_accumulator << request
       return []
     end
 
@@ -140,16 +140,16 @@ class Disclosure < ApplicationRecord
   end
 
   def extract_assets_json
-    assets_text_pages.each_slice(assets_pages).map do |slice|
-      extract_assets_json_portion slice.join("\n\n").strip
+    assets_text_pages.each_slice(assets_pages).map.with_index do |slice, i|
+      extract_assets_json_portion slice.join("\n\n").strip, i+1
     end.reduce(:+)
   end
 
-  def extract_transactions_json_portion(things)
-    request = GptRequest.new(request_type: :transaction, content: things)
+  def extract_transactions_json_portion(things, page)
+    request = GptRequest.new(request_type: :transaction, content: things, page: page, document_external_id: document.external_id)
 
     if request_accumulator
-      request_accumulator.puts request
+      request_accumulator << request
       return []
     end
 
@@ -180,8 +180,8 @@ class Disclosure < ApplicationRecord
   end
 
   def extract_transactions_json
-    transactions_text_pages.each_slice(transactions_pages).map do |slice|
-      extract_transactions_json_portion slice.join("\n\n").strip
+    transactions_text_pages.each_slice(transactions_pages).map.with_index do |slice, i|
+      extract_transactions_json_portion slice.join("\n\n").strip, i+1
     end.reduce(:+)
   end
 
@@ -196,62 +196,15 @@ class Disclosure < ApplicationRecord
     )
   end
 
-  def filer_information_payload
-    payload = {
-      model: gpt_model, # or "gpt-3.5-turbo"
-      messages: [
-        { role: "system", content: "You are a helpful assistant. Your task is to process text and return a json representation of the text" },
-        { role: "user", content: filer_information_prompt }
-      ],
-      max_tokens: max_tokens
-    }
-    if request_accumulator
-      page = 1
-      payload[:custom_id] = "document-#{document_id}-filing-#{page}"
-    end
-    payload
-  end
-
   def extract_filer_information_json
-    # Create the request payload
-    payload = {
-      model: gpt_model, # or "gpt-3.5-turbo"
-      messages: [
-        { role: "system", content: "You are a helpful assistant. Your task is to process text and return a json representation of the text" },
-        { role: "user", content: filer_information_prompt }
-      ],
-      max_tokens: max_tokens
-    }.tap do |p|
-      if request_accumulator
-        page = 1
-        p[:custom_id] = "document-#{document_id}-filing-#{page}"
-      end
-    end.to_json
+    request = GptRequest.new(request_type: :filer_information, content: filer_information, page: 1, document_external_id: document.external_id)
 
     if request_accumulator
-      request_accumulator.puts payload
+      request_accumulator << request
       return {}
     end
 
-    headers = {
-      "Content-Type" => "application/json",
-      "Authorization" => "Bearer #{api_key}"
-    }
-
-    endpoint = "https://api.openai.com/v1/chat/completions"
-    # Make the HTTP POST request to the OpenAI API
-    response = HTTP.headers(headers).post(endpoint, body: payload)
-    response_body = response.body
-    # Parse the response and extract the JSON content
-    structured_json = JSON.parse(response_body)["choices"][0]["message"]["content"]
-    
-    if structured_json.match(/```(?:json)\n(.*)\n```/m)
-      json = structured_json.match(/```(?:json)\n(.*)\n```/m)[1]
-    else
-      json = structured_json
-    end
-
-    JSON::parse(json)
+    request.get_json_response
   end
 
   def extract_json
