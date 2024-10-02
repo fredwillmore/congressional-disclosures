@@ -3,7 +3,7 @@ require 'rails_helper'
 describe GptRequest do
   describe "get_json_response" do
     it "fetches the json response and returns the parsed object" do
-      gpt_request = GptRequest.new(request_type: 'test', content: 'test')
+      gpt_request = GptRequest.new(request_type: 'test', content: 'test', page: 1, document_external_id: "12345")
       # response = HTTP.headers(headers).post(endpoint, body: request.payload)
       http_client = instance_double(HTTP::Client)
       http_response = instance_double(HTTP::Response)
