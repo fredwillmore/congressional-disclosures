@@ -22,7 +22,7 @@
                   .accordion-body
                     %ul.list-group
                       - item.house.each do |legislator|
-                        %li.list-group-item= legislator.name
+                        %li.list-group-item= link_to legislator.name, legislator_show_path(legislator.id)
             .accordion{ id: senate_accordion_id }
               - chamber_heading = "chamberHeadingSenate#{item.state.abbreviation}"
               - chamber_collapse = "chamberCollapseSenate#{item.state.abbreviation}"
@@ -34,4 +34,4 @@
                   .accordion-body
                     %ul.list-group
                       - item.senate.each do |legislator|
-                        %li.list-group-item= legislator.name
+                        %li.list-group-item= link_to legislator.name, legislator_show_path(legislator.id)
