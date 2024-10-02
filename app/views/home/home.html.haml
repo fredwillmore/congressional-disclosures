@@ -1,0 +1,44 @@
+%nav.navbar.navbar-expand-lg.navbar-light.bg-light
+  .container-fluid
+    = link_to "Congressional Disclosures Project", "/", class: "navbar-brand"
+    %button.navbar-toggler{"aria-controls" => "navbarNav", "aria-expanded" => "false", "aria-label" => "Toggle navigation", "data-bs-toggle" => "collapse", "data-bs-target" => "#navbarNav", type: "button"}
+      %span.navbar-toggler-icon
+    #navbarNav.collapse.navbar-collapse
+      %ul.navbar-nav.ms-auto
+        %li.nav-item
+          = link_to "Congress", "/", class: "nav-link active", "aria-current" => "page"
+        %li.nav-item
+          = link_to "Senate", "#", class: "nav-link"
+        %li.nav-item
+          = link_to "House of Representatives", "#", class: "nav-link"
+        %li.nav-item
+          = link_to "Contact", "#", class: "nav-link"
+
+.container
+  .row
+    .col-md-1
+    .col-md-10
+      .container
+        .row
+          .col-md-12
+            Viewing congress:
+            %br
+            =form_tag congress_path, method: :post, local: false, data: {turbo_frame: "congress_turbo_frame"}
+            =select_tag :congress, options_for_select(@congresses, @congress), prompt: "Select a congress to view", onchange: "this.form.requestSubmit();"
+            -# = submit_tag "View Congress"
+
+        .row
+          .col-md-12
+            =turbo_frame_tag "congress_turbo_frame" do
+              this gets replaced
+    .col-md-1
+
+:javascript
+  function doSomething(thing) {
+    // thing.form.submit()
+    // alert("hello");
+  }    
+
+  document.addEventListener('turbo:before-fetch-request', function(event) {
+    console.log('Turbo request:', event.detail.fetchOptions);
+  });
