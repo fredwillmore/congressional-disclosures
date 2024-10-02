@@ -1,9 +1,11 @@
 class GptRequest
-  attr_accessor :request_type, :content
+  attr_accessor :request_type, :content, :page, :document_external_id
 
-  def initialize(request_type: , content:)
+  def initialize(request_type: , content:, page:, document_external_id: )
     @request_type = request_type
     @content = content
+    @page = page
+    @document_external_id = document_external_id
   end
 
   def prompt
@@ -12,11 +14,17 @@ class GptRequest
       transactions_prompt
     when :asset
       assets_prompt
+    when :filer_information
+      filer_information_prompt
     end
   end
 
   def endpoint
     "https://api.openai.com/v1/chat/completions"
+  end
+
+  def endpoint_batch
+    "/v1/chat/completions"
   end
 
   def api_key
@@ -32,17 +40,19 @@ class GptRequest
 
   def get_json_response
     response = send
-    structured_json = JSON.parse(response.body)["choices"][0]["message"]["content"]
-    if structured_json.match(/```(?:json)\n(.*)\n```/m)
-      json = structured_json.match(/```(?:json)\n(.*)\n```/m)[1]
-    else
-      json = structured_json
-    end
-    JSON::parse(json)
+    return GptResponse.new(response: response).get_json_response
+  end
+
+  def custom_id
+    "document-#{document_external_id}-#{request_type}-#{page}"
+  end
+
+  def to_json
+    { custom_id: custom_id, method: "POST", url: endpoint_batch, body: payload }.to_json
   end
 
   def send
-    HTTP.headers(headers).post(endpoint, body: payload)
+    HTTP.headers(headers).post(endpoint, body: payload.to_json)
   end
 
   def gpt_model
@@ -79,7 +89,7 @@ class GptRequest
         { role: "user", content: prompt }
       ],
       max_tokens: max_tokens
-    }.to_json
+    }
   end
 
   def assets_prompt
@@ -287,28 +297,23 @@ Please return a complete JSON array of all table entries, without omitting any e
   end
 
   def filer_information_prompt
-    case abbreviation
-    when 'A'
-      %Q(
-        )
-    when 'O'
-      %Q(
-        Please convert the following text into a JSON hash.
-        The text contains the following values:
-          Name (string),
-          Status (string),
-          State/District (state code and 1-2 digit number),
-          Filing Type (string),
-          Filing Year (year),
-          Filing Date (date)
+    %Q(
+      Please convert the following text into a JSON hash.
+      The text contains the following values:
+        Name (string),
+        Status (string),
+        State/District (state code and 1-2 digit number),
+        Filing Type (string),
+        Filing Year (year),
+        Filing Date (date)
 
-        Please return a JSON hash
-        Hash keys are "name", "status", "state_district", "filing_type", "filing_year", "filing_date"
-        Hash values are values of Name, Status, State/District, Filing Type, Filing Year, Filing Date
+      Please return a JSON hash
+      Hash keys are "name", "status", "state_district", "filing_type", "filing_year", "filing_date"
+      Hash values are values of Name, Status, State/District, Filing Type, Filing Year, Filing Date
 
 
-        Example text:
-        ```
+      Example text:
+      ```
 F I
 
 Name:                 Hon. Thomas MacArthur
@@ -324,28 +329,28 @@ Filing Type:          Annual Report
 Filing Year:          2015
 
 Filing Date:          05/14/2016
-        ```
+      ```
 
-        Desired output:
-        ```
-          {
-            "filer_information" => {
-              "name"=>"Hon. Thomas MacArthur",
-              "status"=>"Member",
-              "state_district"=>"NJ03"
-            },
-            "filing_information" => {
-              "filing_type"=>"Annual Report",
-              "filing_year"=>2015,
-              "filing_date"=>"05/14/2016"
-            },
-          }
-        ```
+      Desired output:
+      ```
+        {
+          "filer_information" => {
+            "name"=>"Hon. Thomas MacArthur",
+            "status"=>"Member",
+            "state_district"=>"NJ03"
+          },
+          "filing_information" => {
+            "filing_type"=>"Annual Report",
+            "filing_year"=>2015,
+            "filing_date"=>"05/14/2016"
+          },
+        }
+      ```
 
-        Please process the following text in the same way:
-      )
-    else
-    end
+      Please process the following text in the same way:
+
+      #{content}
+    )
   end
 
 end
