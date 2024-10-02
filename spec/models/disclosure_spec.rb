@@ -21,12 +21,12 @@ describe Disclosure do
     end
 
     before do
-      allow(disclosure).to receive(:document_path).and_return(document_path)
+      allow(document).to receive(:document_path).and_return(document_path)
     end
 
     it "has UTF-8 encoding" do
       disclosure.extract_text
-      expect(disclosure.document_text.encoding.name).to eq "UTF-8"
+      expect(document.document_text.encoding.name).to eq "UTF-8"
     end
   end
 
