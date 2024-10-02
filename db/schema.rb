@@ -44,9 +44,12 @@ ActiveRecord::Schema[7.1].define(version: 2024_09_26_003226) do
     t.integer "district"
     t.integer "year"
     t.date "filing_date"
+    t.string "document_id"
+    t.string "document_text"
     t.boolean "image_pdf"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.jsonb "json_text"
     t.boolean "gpt_test"
     t.index ["filing_type_id"], name: "index_disclosures_on_filing_type_id"
     t.index ["legislator_id"], name: "index_disclosures_on_representative_id"
@@ -57,8 +60,7 @@ ActiveRecord::Schema[7.1].define(version: 2024_09_26_003226) do
     t.string "external_id"
     t.integer "disclosure_id"
     t.string "document_text"
-    t.string "document_json"
-    t.string "jsonb"
+    t.jsonb "document_json"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
   end
