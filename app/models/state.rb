@@ -1,6 +1,10 @@
 class State < ApplicationRecord
   has_many :terms
 
+  def self.congress_info(congress_number: )
+    all.map { |state| state.congress_info congress_number: congress_number }    
+  end
+
   def congress_info(congress_number: )
     OpenStruct.new(
       {
