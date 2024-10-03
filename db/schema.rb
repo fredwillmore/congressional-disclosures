@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2024_09_26_003226) do
+ActiveRecord::Schema[7.1].define(version: 2024_10_03_204324) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -33,6 +33,15 @@ ActiveRecord::Schema[7.1].define(version: 2024_09_26_003226) do
   create_table "assets_income_types", force: :cascade do |t|
     t.integer "asset_id"
     t.integer "income_type_id"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+  end
+
+  create_table "congresses", force: :cascade do |t|
+    t.string "name"
+    t.integer "start_year"
+    t.integer "end_year"
+    t.jsonb "sessions"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
   end
@@ -116,7 +125,6 @@ ActiveRecord::Schema[7.1].define(version: 2024_09_26_003226) do
   create_table "terms", force: :cascade do |t|
     t.integer "legislator_id"
     t.string "chamber"
-    t.integer "congress"
     t.integer "state_id"
     t.integer "district"
     t.integer "start_year"
@@ -124,6 +132,7 @@ ActiveRecord::Schema[7.1].define(version: 2024_09_26_003226) do
     t.string "member_type"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.integer "congress_id"
   end
 
   create_table "transactions", force: :cascade do |t|

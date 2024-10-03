@@ -1,6 +1,7 @@
 class Term < ApplicationRecord
   belongs_to :legislator
   belongs_to :state
+  has_one :congress
 
   validates :legislator_id, :state, :start_year, presence: true
   validates :start_year, numericality: { other_than: 0 }
@@ -24,5 +25,19 @@ class Term < ApplicationRecord
     ).where(
       "start_year <= ? AND (end_year >= ? OR end_year IS NULL)", year, year
     )
+  end
+
+  def self.congresses
+    distinct
+      .pluck(:congress, :start_year, :end_year)
+      .sort_by(&:first)
+      .reverse
+      .map do |congress, start_year, end_year|
+        {
+          congress: congress,
+          start_year: start_year,
+          end_year: end_year
+        }
+      end
   end
 end

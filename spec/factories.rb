@@ -1,4 +1,8 @@
 FactoryBot.define do
+  factory :congress do
+    
+  end
+
   factory :document do
     
   end
