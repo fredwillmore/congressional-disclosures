@@ -1,12 +1,10 @@
 class HomeController < ApplicationController
   
   def home
-    @congresses = Term.distinct.pluck(:congress).sort.reverse
-
-    @home = { congress: @congress }
-
     respond_to do |format|
-      format.html
+      format.html do
+        render :home, locals: { congresses: congresses, congress: current_congress }
+      end
     end
   end
 
@@ -14,7 +12,7 @@ class HomeController < ApplicationController
     # legislators = Legislator.joins(:terms).where(terms: {congress: current_congress})
     # @house = legislators.where(terms: {chamber: "House of Representatives"})
     # @senate = legislators.where(terms: {chamber: "Senate"})
-    state_info = State.congress_info(congress_number: current_congress)
+    state_info = State.congress_info(congress: current_congress)
     respond_to do |format|
       format.turbo_stream do
         render turbo_stream: turbo_stream.replace(
@@ -29,10 +27,10 @@ class HomeController < ApplicationController
   private
 
   def current_congress
-    @current_congress ||= params[:congress] || congresses.last
+    @current_congress ||= (params[:congress] ? Congress.find(params[:congress]) : congresses.first)
   end
 
   def congresses
-    @congresses ||= Term.distinct.pluck(:congress).sort.reverse
+    @congresses ||= Congress.order(start_year: :desc)
   end
 end

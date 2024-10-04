@@ -10,7 +10,7 @@
             Viewing congress:
             %br
             =form_tag congress_path, method: :post, local: false, data: {turbo_frame: "congress_turbo_frame"}
-            =select_tag :congress, options_for_select(@congresses, @congress), prompt: "Select a congress to view", onchange: "this.form.requestSubmit();"
+            =select_tag :congress, options_from_collection_for_select(congresses, "id", "name", congress), prompt: "Select a congress to view", onchange: "this.form.requestSubmit();"
             -# = submit_tag "View Congress"
 
         .row

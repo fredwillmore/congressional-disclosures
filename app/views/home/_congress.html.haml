@@ -1,6 +1,6 @@
 =turbo_frame_tag "congress_turbo_frame" do
   #accordion.accordion
-    - @state_info.each do |item|
+    - state_info.each do |item|
       - heading = "heading#{item.state.abbreviation}"
       - collapse = "collapse#{item.state.abbreviation}"
       - house_accordion_id = "house#{item.state.abbreviation}"
