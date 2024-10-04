@@ -1,7 +1,7 @@
 class Term < ApplicationRecord
   belongs_to :legislator
   belongs_to :state
-  has_one :congress
+  belongs_to :congress
 
   validates :legislator_id, :state, :start_year, presence: true
   validates :start_year, numericality: { other_than: 0 }
