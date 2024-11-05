@@ -18,7 +18,7 @@ class HomeController < ApplicationController
         render turbo_stream: turbo_stream.replace(
           :congress_turbo_frame,
           partial: "congress",
-          locals: { state_info: state_info }
+          locals: { state_info: state_info, congress: current_congress }
         )
       end
     end
