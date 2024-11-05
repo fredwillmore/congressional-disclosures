@@ -99,7 +99,7 @@ describe Disclosure do
 
         it "creates a GptRequest object" do
           allow(GptRequest).to receive(:new).and_return(gpt_request)
-          expect(request_accumulator).to receive(:puts).with(gpt_request)
+          expect(request_accumulator).to receive(:<<).with(gpt_request)
 
           disclosure.extract_transactions_json
         end

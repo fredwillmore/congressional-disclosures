@@ -18,6 +18,7 @@ FactoryBot.define do
     legislator
     filing_type
     state
+    document { build(:document) }
   end
 
   factory :filing_type do
