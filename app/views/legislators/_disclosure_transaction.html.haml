@@ -1,0 +1,11 @@
+%li.list-group-item.disclosure-transaction
+  %span.field-label Date: 
+  = transaction.date
+  %br
+  %span.field-label Asset: 
+  = transaction.asset
+  - if transaction.amount
+    %br
+    %span.field-label Amount: 
+    = transaction.amount
+

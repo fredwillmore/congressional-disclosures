@@ -1,0 +1,18 @@
+-# = render partial: "layouts/header_nav"
+=turbo_frame_tag "legislator_turbo_frame" do
+  %h2= legislator.name
+  %h3 Terms: 
+  - if legislator.terms.house
+    - legislator.terms.house.each do |t|
+      %p{ class: t == term ? 'fw-bold' : '' }
+        = t.member_type
+        = t.state.name
+        District 
+        = t.district
+        = "#{t.congress.name} #{t.start_year}-#{t.end_year}"
+        %br
+        = link_to "Disclosures", disclosures_legislator_path(legislator, term: t), data: { turbo_frame: "legislator_disclosures_turbo_frame" }
+        %br
+        = link_to "Voting Record", voting_record_legislator_path(legislator, term: t), data: { turbo_frame: "legislator_voting_record_turbo_frame" }
+
+

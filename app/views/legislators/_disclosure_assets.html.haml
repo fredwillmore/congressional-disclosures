@@ -1,0 +1,13 @@
+- accordion_id = "accordion-assets-disclosure-#{disclosure.id}" 
+- collapse_id = "disclosure-assets-collapse-#{disclosure.id}"
+- heading_id = "disclosure-assets-heading-#{disclosure.id}"
+
+.accordion{ id: accordion_id }
+  .accordion-item
+    %h3.accordion-header{ id: heading_id }
+      %button.accordion-button.collapsed{ "aria-controls" => collapse_id, "aria-expanded" => "false", "data-bs-target" => "##{collapse_id}", "data-bs-toggle" => "collapse" }
+        Assets
+    .accordion-collapse.collapse{ id: collapse_id, "aria-labelledby" => heading_id, "data-bs-parent" => accordion_id }
+      .accordion-body
+        %ul.list-group
+          = render partial: "disclosure_asset", collection: disclosure.assets, as: :asset

@@ -1,6 +1,7 @@
 =turbo_frame_tag "congress_turbo_frame" do
   #accordion.accordion
     - state_info.each do |item|
+      - next if item.house.count.zero?
       - heading = "heading#{item.state.abbreviation}"
       - collapse = "collapse#{item.state.abbreviation}"
       - house_accordion_id = "house#{item.state.abbreviation}"
@@ -12,26 +13,26 @@
         .accordion-collapse.collapse{ id: collapse, "aria-labelledby" => heading, "data-bs-parent" => "#accordion"}
           .accordion-body
             .accordion{ id: house_accordion_id }
-              - chamber_heading = "chamberHeadingHouse#{item.state.abbreviation}"
-              - chamber_collapse = "chamberCollapseHouse#{item.state.abbreviation}"
-              .accordion-item
-                %h3.accordion-header{ id: chamber_heading }
-                  %button.accordion-button.collapsed{"aria-controls" => chamber_collapse, "aria-expanded" => "false", "data-bs-target" => "##{chamber_collapse}", "data-bs-toggle" => "collapse"}
-                    House
-                .accordion-collapse.collapse{ id: chamber_collapse, "aria-labelledby" => chamber_heading, "data-bs-parent" => house_accordion_id }
-                  .accordion-body
-                    %ul.list-group
-                      - item.house.each do |legislator|
-                        %li.list-group-item= link_to legislator.name, legislator_show_path(legislator.id)
-            .accordion{ id: senate_accordion_id }
-              - chamber_heading = "chamberHeadingSenate#{item.state.abbreviation}"
-              - chamber_collapse = "chamberCollapseSenate#{item.state.abbreviation}"
-              .accordion-item
-                %h3.accordion-header{ id: chamber_heading }
-                  %button.accordion-button.collapsed{"aria-controls" => chamber_collapse, "aria-expanded" => "false", "data-bs-target" => "##{chamber_collapse}", "data-bs-toggle" => "collapse"}
-                    Senate
-                .accordion-collapse.collapse{ id: chamber_collapse, "aria-labelledby" => chamber_heading, "data-bs-parent" => senate_accordion_id}
-                  .accordion-body
-                    %ul.list-group
-                      - item.senate.each do |legislator|
-                        %li.list-group-item= link_to legislator.name, legislator_show_path(legislator.id)
+              -# - chamber_heading = "chamberHeadingHouse#{item.state.abbreviation}"
+              -# - chamber_collapse = "chamberCollapseHouse#{item.state.abbreviation}"
+              -# .accordion-item
+              -#   %h3.accordion-header{ id: chamber_heading }
+              -#     %button.accordion-button.collapsed{"aria-controls" => chamber_collapse, "aria-expanded" => "false", "data-bs-target" => "##{chamber_collapse}", "data-bs-toggle" => "collapse"}
+              -#       House
+              -#   .accordion-collapse.collapse{ id: chamber_collapse, "aria-labelledby" => chamber_heading, "data-bs-parent" => house_accordion_id }
+              .accordion-body
+                %ul.list-group
+                  - item.house.each do |legislator|
+                    %li.list-group-item= link_to legislator.name, legislator_path(legislator.id, congress_id: congress.id), data: { turbo_frame: "legislator_turbo_frame" }
+            -# .accordion{ id: senate_accordion_id }
+            -#   - chamber_heading = "chamberHeadingSenate#{item.state.abbreviation}"
+            -#   - chamber_collapse = "chamberCollapseSenate#{item.state.abbreviation}"
+            -#   .accordion-item
+            -#     %h3.accordion-header{ id: chamber_heading }
+            -#       %button.accordion-button.collapsed{"aria-controls" => chamber_collapse, "aria-expanded" => "false", "data-bs-target" => "##{chamber_collapse}", "data-bs-toggle" => "collapse"}
+            -#         Senate
+            -#     .accordion-collapse.collapse{ id: chamber_collapse, "aria-labelledby" => chamber_heading, "data-bs-parent" => senate_accordion_id}
+            -#       .accordion-body
+            -#         %ul.list-group
+            -#           - item.senate.each do |legislator|
+            -#             %li.list-group-item= link_to legislator.name, legislator_path(legislator.id, congress_id: congress.id ), data: { turbo_frame: "legislator_turbo_frame" }

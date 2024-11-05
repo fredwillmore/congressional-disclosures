@@ -14,4 +14,17 @@
  *= require_self
  */
  
- @import "bootstrap";
+@import "bootstrap";
+
+.disclosure-transaction, .disclosure-asset {
+  font-family: "Open Sans","Helvetica Neue",Helvetica,Arial,sans-serif;
+  font-size: 10pt;
+  
+  span.field-label {
+    font-weight: bold;
+  }
+}
+
+.accordion-body {
+  padding: 0;
+}

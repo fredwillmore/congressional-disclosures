@@ -1,0 +1,17 @@
+- if disclosure.assets.present? || disclosure.transactions.present?
+  - collapse_id = "disclosure-collapse-#{disclosure.id}"
+  - heading_id = "disclosure-heading-#{disclosure.id}"
+
+  .accordion-item
+    %h2.accordion-header{ id: heading_id }
+      %button.accordion-button.collapsed{ "aria-controls" => collapse_id, "aria-expanded" => "false", "data-bs-target" => "##{collapse_id}", "data-bs-toggle" => "collapse" }
+        = disclosure.json_text["filing_information"]["filing_type"]
+        = disclosure.json_text["filing_information"]["filing_year"]
+        filed: 
+        = Date.strptime(disclosure.json_text["filing_information"]["filing_date"], "%m/%d/%Y")
+    .accordion-collapse.collapse{ id: collapse_id, "aria-labelledby" => heading_id, "data-bs-parent" => "#accordion-disclosures"}
+      .accordion-body
+        - if disclosure.transactions.present?
+          = render partial: "disclosure_transactions", locals: { disclosure: disclosure }
+        - if disclosure.assets.present?
+          = render partial: "disclosure_assets", locals: { disclosure: disclosure }

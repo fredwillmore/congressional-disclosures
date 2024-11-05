@@ -1,0 +1,12 @@
+%li.list-group-item.disclosure-asset
+  %span.field-label Asset: 
+  = asset.asset
+  - if asset.owner
+    %br
+    %span.field-label Owner: 
+    = asset.owner
+  - if asset.asset_value
+    %br
+    %span.field-label Value: 
+    = asset.asset_value
+
