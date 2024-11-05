@@ -1,6 +1,6 @@
 class Asset < ApplicationRecord
   belongs_to :disclosure
-  has_many :income_types
+  has_and_belongs_to_many :income_types
   # belongs_to :asset_value
 
   validates :asset_value, presence: true
@@ -55,6 +55,6 @@ class Asset < ApplicationRecord
   # }
 
   def to_s
-    "asset: #{asset}, owner: #{owner}, value: #{asset_value}, income: #{income}, income_type: #{income_type}"
+    "asset: #{asset}, owner: #{owner}, value: #{asset_value}, income: #{income}, income_types: #{income_types.map(&:name)}"
   end
 end

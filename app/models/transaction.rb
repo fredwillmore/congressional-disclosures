@@ -31,6 +31,6 @@ class Transaction < ApplicationRecord
   }
 
   def to_s
-    "date: #{date}, asset: #{asset}, owner: #{owner}, amount: #{amount}, transaction_type: #{transaction_type}, cap_gains_over_200: #{cap_gains_over_200}"
+    "date: #{date}, asset: #{asset}, owner: #{owner}, amount: #{amount}, transaction_type: #{transaction_type}"
   end
 end
