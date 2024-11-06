@@ -6,9 +6,9 @@
       .container
         .row
           .col-md-12
-            =form_tag congress_path, method: :post, local: false, data: {turbo_frame: "congress_turbo_frame"}
-            =select_tag :congress, options_from_collection_for_select(congresses, "id", "name", congress), prompt: "Select a congress to view", onchange: "this.form.requestSubmit();"
-            -# = submit_tag "View Congress"
+            =form_tag congress_path, method: :post, local: false, data: {turbo_frame: "congress_turbo_frame"} do
+              =select_tag :congress, options_from_collection_for_select(congresses, "id", "name", congress), prompt: "Select a congress to view", onchange: "this.form.requestSubmit();"
+              -# = submit_tag "View Congress"
 
         .row
           .col-md-12
