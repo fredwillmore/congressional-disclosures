@@ -8,8 +8,6 @@
           .col-md-12
             =form_tag congress_path, method: :post, local: false, data: {turbo_frame: "congress_turbo_frame"} do
               =select_tag :congress, options_from_collection_for_select(congresses, "id", "name", congress), prompt: "Select a congress to view", onchange: "this.form.requestSubmit();"
-              -# = submit_tag "View Congress"
-
         .row
           .col-md-12
             =turbo_frame_tag "congress_turbo_frame"
@@ -19,13 +17,3 @@
       =turbo_frame_tag "legislator_disclosures_turbo_frame"
     .col-md-3
       =turbo_frame_tag "legislator_voting_record_turbo_frame"
-
-:javascript
-  function doSomething(thing) {
-    // thing.form.submit()
-    // alert("hello");
-  }    
-
-  document.addEventListener('turbo:before-fetch-request', function(event) {
-    console.log('Turbo request:', event.detail.fetchOptions);
-  });
