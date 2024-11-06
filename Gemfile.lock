@@ -152,6 +152,7 @@ GEM
       haml (>= 4.0.6)
       railties (>= 5.1)
     hashery (2.1.2)
+    html_validation (1.1.6)
     http (5.2.0)
       addressable (~> 2.8)
       base64 (~> 0.1)
@@ -389,6 +390,7 @@ DEPENDENCIES
   faraday
   faraday-retry
   haml-rails
+  html_validation (~> 1.1, >= 1.1.6)
   http
   importmap-rails
   jbuilder

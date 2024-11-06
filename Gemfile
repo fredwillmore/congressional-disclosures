@@ -69,6 +69,8 @@ group :development, :test do
   gem 'rspec-rails'
   gem "factory_bot_rails"
   gem 'dotenv-rails', groups: [:development, :test]
+  gem 'html_validation', '~> 1.1', '>= 1.1.6'
+  gem 'capybara'
 end
 
 group :development do
@@ -87,3 +89,4 @@ group :test do
   gem "capybara"
   gem "selenium-webdriver"
 end
+
