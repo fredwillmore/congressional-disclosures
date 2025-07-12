@@ -1,0 +1,41 @@
+name: RSpec & Auto-Merge Dependabot PRs
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, labeled]
+
+jobs:
+  test-and-automerge:
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: write         # for merging
+      pull-requests: write    # for enabling auto-merge
+      actions: read
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: 3.3 # or your app's version
+          bundler-cache: true
+
+      - name: Run RSpec tests
+        run: |
+          bundle install
+          bundle exec rspec
+
+      - name: Auto-approve Dependabot PRs
+        if: github.actor == 'dependabot[bot]'
+        uses: hmarr/auto-approve-action@v3
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Enable auto-merge for Dependabot PRs
+        if: github.actor == 'dependabot[bot]'
+        uses: peter-evans/enable-pull-request-automerge@v3
+        with:
+          merge-method: squash
